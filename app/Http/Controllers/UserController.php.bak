@@ -1,0 +1,64 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+
+class UserController extends Controller
+{
+   public function register(Request $request)
+    {
+       
+        $validated = $request->validate([
+            'fullName' => 'required|string|max:255',
+            'phoneNumber' => 'required|string|unique:users,phone_number|max:20',
+            'password' => 'required|string|min:8',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['fullName'],
+            'phone_number' => $validated['phoneNumber'],
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        
+        $token = $user->createToken('lifestream-app')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Registration successful',
+            'user' => $user,
+            'token' => $token
+        ], 201);
+    }
+
+
+    public function login(Request $request)
+    {
+        $request->validate([
+            'phoneNumber' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('phone_number', $request->phoneNumber)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+
+        $token = $user->createToken('lifestream-app')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'user' => $user,
+            'token' => $token
+        ], 200);
+    }
+
+}

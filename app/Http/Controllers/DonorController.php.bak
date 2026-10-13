@@ -1,0 +1,33 @@
+<?php
+namespace App\Http\Controllers;
+
+use App\Models\Donor;
+use Illuminate\Http\Request;
+
+class DonorController extends Controller
+{
+    /**
+     * Fetch all donors with optional filtering
+     */
+    public function index()
+    {
+        try{
+        $donors = Donor::with('user')->get();
+        if($donors->isEmpty()){
+            return response()->json([
+                'success' => false,
+                'message' => "Be the first to give — because somewhere, someone's life is waiting on your courage to show up."
+            ]);
+        }
+        return response()->json([
+            'success' => true,
+            'donors' => $donors
+        ], 200);
+        }catch(\Exception $err){
+            return response()->json([
+                'success' => false,
+                "message" => $err->getMessage()
+            ]);
+        }
+    }
+}
